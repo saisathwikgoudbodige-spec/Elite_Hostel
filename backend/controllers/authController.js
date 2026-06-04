@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Student = require('../models/Student');
 const bcrypt = require('bcryptjs');
+const { uploadImageToCloudinary, cloudinaryConfigured } = require('../utils/cloudinary');
 
 // Helper to generate JWT Token
 const generateToken = (id, role) => {
@@ -88,14 +89,38 @@ const registerStudent = async (req, res, next) => {
 
     // Handle files if uploaded
     if (req.files) {
-      if (req.files.photo) {
-        studentData.photo = `/uploads/${req.files.photo[0].filename}`;
+      if (req.files.photo && req.files.photo[0]) {
+        if (cloudinaryConfigured && req.files.photo[0].buffer) {
+          const uploadRes = await uploadImageToCloudinary(req.files.photo[0].buffer, {
+            folder: 'hostel-fee-manager/students',
+            public_id: `student-photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+          });
+          studentData.photo = uploadRes.secure_url;
+        } else {
+          studentData.photo = `/uploads/${req.files.photo[0].filename}`;
+        }
       }
-      if (req.files.documentScan) {
-        studentData.documentScan = `/uploads/${req.files.documentScan[0].filename}`;
+      if (req.files.documentScan && req.files.documentScan[0]) {
+        if (cloudinaryConfigured && req.files.documentScan[0].buffer) {
+          const uploadRes = await uploadImageToCloudinary(req.files.documentScan[0].buffer, {
+            folder: 'hostel-fee-manager/students',
+            public_id: `student-doc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+          });
+          studentData.documentScan = uploadRes.secure_url;
+        } else {
+          studentData.documentScan = `/uploads/${req.files.documentScan[0].filename}`;
+        }
       }
-      if (req.files.collegeIdScan) {
-        studentData.collegeIdScan = `/uploads/${req.files.collegeIdScan[0].filename}`;
+      if (req.files.collegeIdScan && req.files.collegeIdScan[0]) {
+        if (cloudinaryConfigured && req.files.collegeIdScan[0].buffer) {
+          const uploadRes = await uploadImageToCloudinary(req.files.collegeIdScan[0].buffer, {
+            folder: 'hostel-fee-manager/students',
+            public_id: `student-id-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+          });
+          studentData.collegeIdScan = uploadRes.secure_url;
+        } else {
+          studentData.collegeIdScan = `/uploads/${req.files.collegeIdScan[0].filename}`;
+        }
       }
     }
 

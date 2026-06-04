@@ -79,6 +79,8 @@ MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/hostel-fe
 JWT_SECRET=your_super_strong_jwt_secret_key_change_this_to_something_long_and_random
 AADHAAR_ENCRYPTION_KEY=your_secure_32_character_key_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 FRONTEND_URL=https://your-frontend-vercel-url.vercel.app
+# Optional Cloudinary config for uploads
+CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
 NODE_ENV=production
 ```
 

@@ -64,5 +64,6 @@ A MERN-stack hostel fee management and student tracking application with owner a
 
 - The frontend supports `VITE_API_BASE_URL` and `VITE_API_URL` for API requests.
 - The backend uses `FRONTEND_URL` for CORS.
+- Optional Cloudinary image uploads are supported via `CLOUDINARY_URL` or `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`.
 - Student registration is available at `/register`.
 - Owner login is at `/login` with `Owner / Admin` selected.

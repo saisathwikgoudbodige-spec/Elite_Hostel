@@ -4,6 +4,7 @@ const Notification = require('../models/Notification');
 const Setting = require('../models/Setting');
 const { calculateFeeDetails } = require('../utils/feeCalculator');
 const { generatePaymentReceipt } = require('../utils/pdfGenerator');
+const { uploadImageToCloudinary, cloudinaryConfigured } = require('../utils/cloudinary');
 
 const createPaymentNotification = async (student, message) => {
   return await Notification.create({
@@ -97,7 +98,15 @@ const submitPayment = async (req, res, next) => {
 
     let screenshotUrl = '';
     if (req.file) {
-      screenshotUrl = `/uploads/screenshots/${req.file.filename}`;
+      if (cloudinaryConfigured && req.file.buffer) {
+        const uploadResult = await uploadImageToCloudinary(req.file.buffer, {
+          folder: 'hostel-fee-manager/payments',
+          public_id: `payment-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        });
+        screenshotUrl = uploadResult.secure_url;
+      } else {
+        screenshotUrl = `/uploads/screenshots/${req.file.filename}`;
+      }
     }
 
     const payment = await Payment.create({

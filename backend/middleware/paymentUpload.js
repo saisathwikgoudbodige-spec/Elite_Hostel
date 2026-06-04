@@ -8,16 +8,19 @@ if (!fs.existsSync(screenshotsDir)) {
 }
 
 const { randomUUID } = require('crypto');
+const useCloudinary = Boolean(process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME);
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, screenshotsDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueName = `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`;
-    cb(null, uniqueName);
-  }
-});
+const storage = useCloudinary
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: function (req, file, cb) {
+        cb(null, screenshotsDir);
+      },
+      filename: function (req, file, cb) {
+        const uniqueName = `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`;
+        cb(null, uniqueName);
+      }
+    });
 
 const fileFilter = (req, file, cb) => {
   const allowed = /jpeg|jpg|png|webp/;
