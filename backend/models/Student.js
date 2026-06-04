@@ -5,8 +5,7 @@ const Counter = require('./Counter');
 
 const StudentSchema = new mongoose.Schema({
   studentId: {
-    type: String,
-    unique: true
+    type: String
   },
   name: {
     type: String,
@@ -54,7 +53,6 @@ const StudentSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     lowercase: true,
     trim: true
   },

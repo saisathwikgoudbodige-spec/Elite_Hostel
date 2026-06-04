@@ -23,20 +23,29 @@ connectDB();
 const app = express();
 
 // Middlewares
-const allowedOrigins = process.env.CLIENT_ORIGIN
-  ? process.env.CLIENT_ORIGIN.split(',').map((url) => url.trim())
-  : ['http://localhost:5173', 'http://localhost:3000'];
+const frontendUrl = process.env.FRONTEND_URL;
+const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
+const allowedOrigins = [
+  frontendUrl,
+  vercelUrl,
+  'https://your-app.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+].filter(Boolean);
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('CORS policy: This origin is not allowed'));
+      callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -51,6 +60,11 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadDir));
+
+// Health check for Render keep-alive
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date() });
+});
 
 // Mount routes
 app.use('/api/auth', authRoutes);

@@ -60,12 +60,12 @@ const OwnerDashboard = () => {
         // Calculate total due for all active students
         let totalDue = 0;
         const overdueStudents = [];
-        active.forEach(s => {
+          active.forEach(s => {
           const joinDate = new Date(s.joiningDate);
           const now = new Date();
           const monthsElapsed = (now.getFullYear() - joinDate.getFullYear()) * 12 + (now.getMonth() - joinDate.getMonth());
           const studentPayments = payments.filter(p => (p.student?._id || p.student) === s._id);
-          const studentPaid = studentPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+          const studentPaid = studentPayments.reduce((sum, p) => sum + (p.amountPaid || 0), 0);
           const due = Math.max(0, (monthsElapsed * s.monthlyFee) - studentPaid);
           totalDue += due;
           if (due > 0) {
@@ -147,9 +147,9 @@ const OwnerDashboard = () => {
                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                       {p.student?.name || 'Student'}
                     </p>
-                    <p className="text-xs text-slate-400">{new Date(p.paidDate || p.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-400">{new Date(p.paymentDate || p.createdAt).toLocaleDateString()}</p>
                   </div>
-                  <span className="text-sm font-bold text-emerald-500">+₹{p.amount?.toLocaleString()}</span>
+                    <span className="text-sm font-bold text-emerald-500">+₹{(p.amountPaid || 0).toLocaleString()}</span>
                 </div>
               ))
             )}

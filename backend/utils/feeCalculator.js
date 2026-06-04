@@ -108,8 +108,9 @@ function getNextDueDate(joiningDate, feeCycleType, dueDay, targetDate = new Date
 function calculateFeeDetails(student, payments = [], targetDate = new Date()) {
   const { joiningDate, feeCycleType, dueDay, monthlyFee } = student;
   
-  // 1. Total paid
-  const totalPaid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+  // 1. Only approved payments count toward balance.
+  const approvedPayments = payments.filter((p) => p.status === 'approved' || p.status == null);
+  const totalPaid = approvedPayments.reduce((sum, p) => sum + p.amountPaid, 0);
 
   // 2. Due dates that have passed up to targetDate
   const dueDates = getDueDates(joiningDate, feeCycleType, dueDay, targetDate);

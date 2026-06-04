@@ -1,8 +1,22 @@
 const Payment = require('../models/Payment');
 const Student = require('../models/Student');
+const Notification = require('../models/Notification');
 const Setting = require('../models/Setting');
 const { calculateFeeDetails } = require('../utils/feeCalculator');
 const { generatePaymentReceipt } = require('../utils/pdfGenerator');
+
+const createPaymentNotification = async (student, message) => {
+  return await Notification.create({
+    student: student._id,
+    studentId: student.studentId,
+    recipientName: student.parentOrGuardianName,
+    recipientPhone: student.parentPhone,
+    message,
+    type: 'Payment',
+    isRead: false,
+    status: 'Sent'
+  });
+};
 
 // @desc    Record a new payment
 // @route   POST /api/payments
@@ -28,7 +42,7 @@ const recordPayment = async (req, res, next) => {
       return next(new Error(`Cannot record payment. Student status is currently ${student.status}.`));
     }
 
-    // Create payment record
+    // Create payment record and immediately approve as owner entry
     const payment = await Payment.create({
       student: student._id,
       studentId,
@@ -36,7 +50,10 @@ const recordPayment = async (req, res, next) => {
       paymentDate: paymentDate || new Date(),
       paymentMode,
       transactionId: transactionId || '',
-      remarks: remarks || ''
+      remarks: remarks || '',
+      status: 'approved',
+      reviewedAt: new Date(),
+      reviewedBy: req.user?._id
     });
 
     // Recalculate fee details
@@ -48,6 +65,152 @@ const recordPayment = async (req, res, next) => {
       message: 'Payment recorded successfully',
       data: payment,
       feeDetails
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Submit a payment request as a student
+// @route   POST /api/payments/submit
+// @access  Private/Student
+const submitPayment = async (req, res, next) => {
+  try {
+    const studentId = req.body.studentId || req.user.studentId;
+    const { amount, paymentMode, transactionId, remarks, paymentDate } = req.body;
+
+    if (!studentId || amount === undefined || !paymentMode || !paymentDate) {
+      res.status(400);
+      return next(new Error('studentId, amount, paymentMode and paymentDate are required')); 
+    }
+
+    const student = await Student.findOne({ studentId });
+    if (!student) {
+      res.status(404);
+      return next(new Error('Student not found'));
+    }
+
+    if (req.userRole === 'student' && req.user._id.toString() !== student._id.toString()) {
+      res.status(403);
+      return next(new Error('Unauthorized to submit payment for this student'));
+    }
+
+    let screenshotUrl = '';
+    if (req.file) {
+      screenshotUrl = `/uploads/screenshots/${req.file.filename}`;
+    }
+
+    const payment = await Payment.create({
+      student: student._id,
+      studentId: student.studentId,
+      amountPaid: Number(amount),
+      paymentDate: new Date(paymentDate),
+      paymentMode,
+      transactionId: transactionId || '',
+      remarks: remarks || '',
+      screenshotUrl,
+      status: 'pending'
+    });
+
+    res.status(201).json({
+      success: true,
+      paymentId: payment._id,
+      message: 'Submitted for review',
+      data: payment
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Get pending payment requests for owner review
+// @route   GET /api/payments/requests
+// @access  Private/Owner
+const getPaymentRequests = async (req, res, next) => {
+  try {
+    const pendingPayments = await Payment.find({ status: 'pending' })
+      .populate('student', 'name photo roomNumber studentId')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: pendingPayments.length,
+      data: pendingPayments
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Approve a pending payment request
+// @route   PATCH /api/payments/:id/approve
+// @access  Private/Owner
+const approvePayment = async (req, res, next) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) {
+      res.status(404);
+      return next(new Error('Payment request not found'));
+    }
+
+    if (payment.status !== 'pending') {
+      res.status(400);
+      return next(new Error('Only pending payments can be approved'));
+    }
+
+    payment.status = 'approved';
+    payment.reviewedAt = new Date();
+    payment.reviewedBy = req.user?._id;
+    await payment.save();
+
+    const student = await Student.findById(payment.student);
+    const feeDetails = calculateFeeDetails(student, await Payment.find({ student: student._id }));
+
+    const message = `Your payment of ₹${payment.amountPaid.toLocaleString('en-IN')} on ${new Date(payment.paymentDate).toLocaleDateString('en-IN')} has been approved. Thank you!`;
+    await createPaymentNotification(student, message);
+
+    res.json({
+      success: true,
+      message: 'Payment approved',
+      data: payment,
+      feeDetails
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Decline a pending payment request
+// @route   PATCH /api/payments/:id/decline
+// @access  Private/Owner
+const declinePayment = async (req, res, next) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) {
+      res.status(404);
+      return next(new Error('Payment request not found'));
+    }
+
+    if (payment.status !== 'pending') {
+      res.status(400);
+      return next(new Error('Only pending payments can be declined'));
+    }
+
+    const { reason } = req.body;
+    payment.status = 'declined';
+    payment.declineReason = reason || 'No reason provided';
+    payment.reviewedAt = new Date();
+    payment.reviewedBy = req.user?._id;
+    await payment.save();
+
+    const student = await Student.findById(payment.student);
+    const message = `Your payment submission of ₹${payment.amountPaid.toLocaleString('en-IN')} was declined. Reason: ${payment.declineReason}. Please contact your hostel owner.`;
+    await createPaymentNotification(student, message);
+
+    res.json({
+      success: true,
+      message: 'Payment declined',
+      data: payment
     });
   } catch (err) {
     next(err);
@@ -161,6 +324,10 @@ const getReceiptPdf = async (req, res, next) => {
 
 module.exports = {
   recordPayment,
+  submitPayment,
+  getPaymentRequests,
+  approvePayment,
+  declinePayment,
   getPaymentHistory,
   getPaymentsByStudent,
   getReceiptPdf

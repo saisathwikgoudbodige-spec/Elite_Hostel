@@ -64,6 +64,24 @@ const getRemindersList = async (req, res, next) => {
   }
 };
 
+// @desc    Get notifications for the current student
+// @route   GET /api/notifications/student
+// @access  Private/Student
+const getStudentNotifications = async (req, res, next) => {
+  try {
+    const notifications = await Notification.find({ student: req.user._id })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: notifications.length,
+      data: notifications
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Simulate and log sending a reminder
 // @route   POST /api/notifications/send
 // @access  Private/Owner
@@ -130,5 +148,6 @@ const sendReminder = async (req, res, next) => {
 module.exports = {
   getNotificationsLog,
   getRemindersList,
-  sendReminder
+  sendReminder,
+  getStudentNotifications
 };

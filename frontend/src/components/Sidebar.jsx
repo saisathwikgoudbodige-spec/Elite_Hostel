@@ -19,19 +19,20 @@ const Sidebar = () => {
   };
 
   const ownerLinks = [
-    { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/admin/students', label: 'Students', icon: Users },
-    { to: '/admin/rooms', label: 'Rooms', icon: Bed },
-    { to: '/admin/payments', label: 'Payments', icon: CreditCard },
-    { to: '/admin/expenses', label: 'Expenses', icon: IndianRupee },
-    { to: '/admin/reports', label: 'Reports', icon: FileText },
-    { to: '/admin/notifications', label: 'Notifications', icon: Bell },
-    { to: '/admin/settings', label: 'Settings', icon: Settings },
+    { to: '/owner/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/owner/students', label: 'Students', icon: Users },
+    { to: '/owner/rooms', label: 'Rooms', icon: Bed },
+    { to: '/owner/payments', label: 'Payments', icon: CreditCard },
+    { to: '/owner/expenses', label: 'Expenses', icon: IndianRupee },
+    { to: '/owner/reports', label: 'Reports', icon: FileText },
+    { to: '/owner/notifications', label: 'Notifications', icon: Bell },
+    { to: '/owner/settings', label: 'Settings', icon: Settings },
   ];
 
   const studentLinks = [
     { to: '/student/dashboard', label: 'My Dashboard', icon: LayoutDashboard },
     { to: '/student/profile', label: 'My Profile', icon: Users },
+    { to: '/student/payments/submit', label: 'Submit Payment', icon: CreditCard },
   ];
 
   const links = role === 'owner' ? ownerLinks : studentLinks;

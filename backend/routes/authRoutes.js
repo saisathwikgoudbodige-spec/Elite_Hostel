@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { registerStudent, loginStudent, loginOwner, getMe } = require('../controllers/authController');
+const { registerOwner, registerStudent, loginStudent, loginOwner, getMe } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+
+// Owner registration
+router.post('/register/owner', registerOwner);
 
 // Student self registration with file uploads
 router.post('/register', upload.fields([

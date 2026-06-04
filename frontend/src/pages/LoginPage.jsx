@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Bed, Eye, EyeOff, LogIn } from 'lucide-react';
@@ -7,6 +7,7 @@ import { Bed, Eye, EyeOff, LogIn } from 'lucide-react';
 const LoginPage = () => {
   const { login } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
   const [type, setType] = useState('owner');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,10 +18,14 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     const result = await login(email, password, type);
-    if (!result?.success) {
+    if (result?.success) {
+      const redirectPath = type === 'owner' ? '/admin/dashboard' : '/student/dashboard';
+      navigate(redirectPath);
+    } else {
       toast.error(result?.message || 'Login failed');
     }
     setLoading(false);
+
   };
 
   return (
@@ -126,6 +131,12 @@ const LoginPage = () => {
               Student?{' '}
               <Link to="/register" className="text-sky-400 hover:text-sky-300 font-semibold transition-colors">
                 Register here
+              </Link>
+            </p>
+            <p className="text-slate-400 text-sm mt-2">
+              New hostel owner?{' '}
+              <Link to="/register/owner" className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
+                Create admin account
               </Link>
             </p>
           </div>

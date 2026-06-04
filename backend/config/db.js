@@ -2,12 +2,16 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:25017/hostel-fee-manager', {
-      // Modern mongoose version does not require obsolete options like useNewUrlParser or useUnifiedTopology
+    const uri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/hostel-fee-manager';
+    const conn = await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log('MongoDB connected');
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
+    console.error('MongoDB error:', error);
     process.exit(1);
   }
 };

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Student = require('../models/Student');
+const bcrypt = require('bcryptjs');
 
 // Helper to generate JWT Token
 const generateToken = (id, role) => {
@@ -9,6 +10,65 @@ const generateToken = (id, role) => {
     process.env.JWT_SECRET || 'secretkey',
     { expiresIn: '30d' }
   );
+};
+
+// @desc    Register a new hostel owner
+// @route   POST /api/auth/register/owner
+// @access  Public
+const registerOwner = async (req, res, next) => {
+  try {
+    const { name, email, password, confirmPassword } = req.body;
+
+    // Validation
+    if (!name || !email || !password || !confirmPassword) {
+      res.status(400);
+      return next(new Error('Please provide all required fields'));
+    }
+
+    if (password !== confirmPassword) {
+      res.status(400);
+      return next(new Error('Passwords do not match'));
+    }
+
+    if (password.length < 6) {
+      res.status(400);
+      return next(new Error('Password must be at least 6 characters'));
+    }
+
+    // Check if email already exists
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      res.status(400);
+      return next(new Error('Email is already registered'));
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create owner
+    const owner = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'owner'
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Owner account created successfully! You can now login.',
+      token: generateToken(owner._id, 'owner'),
+      role: 'owner',
+      user: {
+        _id: owner._id,
+        name: owner.name,
+        email: owner.email,
+        role: owner.role
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // @desc    Register a new student
@@ -168,6 +228,7 @@ const getMe = async (req, res, next) => {
 };
 
 module.exports = {
+  registerOwner,
   registerStudent,
   loginStudent,
   loginOwner,

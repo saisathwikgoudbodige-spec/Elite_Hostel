@@ -24,7 +24,7 @@ const NotificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['WhatsApp', 'Email', 'SMS'],
+    enum: ['WhatsApp', 'Email', 'SMS', 'Payment'],
     default: 'WhatsApp'
   },
   sentDate: {
@@ -35,6 +35,10 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     enum: ['Sent', 'Failed'],
     default: 'Sent'
+  },
+  isRead: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

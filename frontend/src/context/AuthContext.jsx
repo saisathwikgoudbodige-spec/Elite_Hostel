@@ -1,9 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-// Default base URL for API requests
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const rawApiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const apiBaseUrl = rawApiUrl.replace(/\/api$/, '');
 axios.defaults.baseURL = apiBaseUrl;
+axios.defaults.withCredentials = true;
+
+let hasSetInterceptor = false;
+if (!hasSetInterceptor) {
+  axios.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  }, (error) => Promise.reject(error));
+  hasSetInterceptor = true;
+}
 
 const AuthContext = createContext();
 
@@ -80,12 +93,8 @@ export const AuthProvider = ({ children }) => {
   const register = async (formData) => {
     setLoading(true);
     try {
-      // Must use multipart/form-data for files upload
-      const res = await axios.post('/api/auth/register', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // Let axios/browser set the multipart/form-data boundary header automatically
+      const res = await axios.post('/api/auth/register', formData);
       return {
         success: true,
         message: res.data.message

@@ -47,13 +47,13 @@ A MERN-stack hostel fee management and student tracking application with owner a
 ### Frontend
 
 - Deploy to Vercel using the `frontend` folder as the root.
-- Set `VITE_API_BASE_URL` in Vercel environment variables to your backend URL.
+- Set `VITE_API_BASE_URL` or `VITE_API_URL` in Vercel environment variables to your backend URL.
 
 ### Backend
 
 - Deploy to Render, Heroku, or any Node.js host using `backend/server.js`.
 - Set the env variables from `backend/.env.example`.
-- Ensure `CLIENT_ORIGIN` matches your frontend deployment URL.
+- Ensure `FRONTEND_URL` matches your frontend deployment URL.
 
 ### Database
 
@@ -62,7 +62,7 @@ A MERN-stack hostel fee management and student tracking application with owner a
 
 ## Notes
 
-- The frontend uses `VITE_API_BASE_URL` for API requests.
-- The backend uses `CLIENT_ORIGIN` for CORS.
+- The frontend supports `VITE_API_BASE_URL` and `VITE_API_URL` for API requests.
+- The backend uses `FRONTEND_URL` for CORS.
 - Student registration is available at `/register`.
 - Owner login is at `/login` with `Owner / Admin` selected.
